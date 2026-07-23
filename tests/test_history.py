@@ -5,8 +5,10 @@ import pytest
 from swe_memory_policy.history import (
     HistoryProtocolError,
     parse_chat_history,
+    parse_mini_swe_agent_history,
     render_flat_history,
     render_init_history,
+    render_init_history_units,
 )
 
 
@@ -67,6 +69,30 @@ def test_framework_feedback_is_part_of_oa() -> None:
     parsed = parse_chat_history(messages)
     assert parsed.oa_units[0].observations[0]["role"] == "user"
     assert "FRAMEWORK 01" in render_flat_history(parsed.oa_units)
+
+
+def test_mini_standalone_format_feedback_is_not_faked_as_oa() -> None:
+    messages = _messages()[:2] + [
+        {"role": "user", "content": "Every response needs a bash tool call"},
+        *_messages()[2:],
+    ]
+    parsed = parse_mini_swe_agent_history(messages)
+    assert len(parsed.feedback_units) == 1
+    assert len(parsed.oa_units) == 1
+    display = render_init_history_units(parsed.history_units)
+    assert display.startswith(
+        "[Framework Feedback 1]\nEvery response needs a bash tool call\n\n"
+    )
+    assert "[Action 1]" in display
+
+
+def test_mini_multi_bash_pairing_is_strict() -> None:
+    parsed = parse_mini_swe_agent_history(_messages())
+    assert len(parsed.oa_units[0].observations) == 2
+    broken = _messages()
+    broken[-1]["tool_call_id"] = "unknown"
+    with pytest.raises(HistoryProtocolError, match="undeclared"):
+        parse_mini_swe_agent_history(broken)
 
 
 def test_init_display_is_readable_and_omits_transport_ids() -> None:

@@ -27,9 +27,38 @@ class OAUnit:
 
 
 @dataclass(frozen=True)
+class FrameworkFeedbackUnit:
+    sequence_index: int
+    feedback_index: int
+    message: dict[str, Any]
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "sequence_index": self.sequence_index,
+            "feedback_index": self.feedback_index,
+            "message": self.message,
+        }
+
+
+HistoryUnit = OAUnit | FrameworkFeedbackUnit
+
+
+@dataclass(frozen=True)
 class ParsedHistory:
     static_messages: tuple[dict[str, Any], ...]
-    oa_units: tuple[OAUnit, ...]
+    history_units: tuple[HistoryUnit, ...]
+
+    @property
+    def oa_units(self) -> tuple[OAUnit, ...]:
+        return tuple(unit for unit in self.history_units if isinstance(unit, OAUnit))
+
+    @property
+    def feedback_units(self) -> tuple[FrameworkFeedbackUnit, ...]:
+        return tuple(
+            unit
+            for unit in self.history_units
+            if isinstance(unit, FrameworkFeedbackUnit)
+        )
 
 
 def _tool_calls(message: dict[str, Any]) -> list[dict[str, Any]]:
@@ -132,6 +161,96 @@ def parse_chat_history(messages: list[dict[str, Any]]) -> ParsedHistory:
     return ParsedHistory(tuple(static), tuple(units))
 
 
+def parse_mini_swe_agent_history(
+    messages: list[dict[str, Any]],
+) -> ParsedHistory:
+    """Parse mini-SWE-agent v2's linear OpenAI tool-call history.
+
+    The first two messages are the official system and instance prompts.  A
+    format error is recorded by mini as a standalone user message because the
+    invalid assistant response is not appended to the agent history.  Preserve
+    that message as framework feedback instead of pretending it is an action.
+    """
+
+    if not isinstance(messages, list) or len(messages) < 2:
+        raise HistoryProtocolError("mini history must contain system and task")
+    for message in messages:
+        if not isinstance(message, dict):
+            raise HistoryProtocolError("each message must be an object")
+        if message.get("role") not in ALLOWED_ROLES:
+            raise HistoryProtocolError(
+                f"unsupported message role: {message.get('role')!r}"
+            )
+    if messages[0].get("role") != "system" or messages[1].get("role") != "user":
+        raise HistoryProtocolError("mini static prefix must be system then user")
+
+    static = tuple(messages[:2])
+    units: list[HistoryUnit] = []
+    oa_index = 0
+    feedback_index = 0
+    cursor = 2
+    while cursor < len(messages):
+        message = messages[cursor]
+        if message["role"] == "user":
+            feedback_index += 1
+            units.append(
+                FrameworkFeedbackUnit(
+                    sequence_index=len(units) + 1,
+                    feedback_index=feedback_index,
+                    message=message,
+                )
+            )
+            cursor += 1
+            continue
+        if message["role"] != "assistant":
+            raise HistoryProtocolError(
+                f"expected assistant or framework feedback at position {cursor}, "
+                f"got {message['role']}"
+            )
+
+        assistant = message
+        declared_calls = _tool_calls(assistant)
+        if not declared_calls:
+            raise HistoryProtocolError(
+                "mini historical assistant message has no bash tool call"
+            )
+        expected_ids = {call["id"] for call in declared_calls}
+        observations: list[dict[str, Any]] = []
+        matched_ids: set[str] = set()
+        cursor += 1
+        while cursor < len(messages) and messages[cursor]["role"] == "tool":
+            observation = messages[cursor]
+            call_id = observation.get("tool_call_id")
+            if not isinstance(call_id, str) or not call_id:
+                raise HistoryProtocolError("tool observation is missing tool_call_id")
+            if call_id not in expected_ids:
+                raise HistoryProtocolError(
+                    f"observation references undeclared tool call: {call_id}"
+                )
+            if call_id in matched_ids:
+                raise HistoryProtocolError(
+                    f"duplicate observation for tool call: {call_id}"
+                )
+            matched_ids.add(call_id)
+            observations.append(observation)
+            cursor += 1
+        missing = expected_ids - matched_ids
+        if missing:
+            raise HistoryProtocolError(
+                "assistant tool calls have no observations: "
+                + ", ".join(sorted(missing))
+            )
+        oa_index += 1
+        units.append(
+            OAUnit(
+                oa_index=oa_index,
+                assistant=assistant,
+                observations=tuple(observations),
+            )
+        )
+    return ParsedHistory(static, tuple(units))
+
+
 def _content_text(content: Any) -> str:
     if content is None:
         return ""
@@ -227,3 +346,19 @@ def render_init_history(units: tuple[OAUnit, ...]) -> str:
     return "\n".join(render_init_oa_display(unit).rstrip("\n") for unit in units) + (
         "\n" if units else ""
     )
+
+
+def render_init_history_units(units: tuple[HistoryUnit, ...]) -> str:
+    """Render OA units and standalone framework feedback in wire order."""
+
+    rendered: list[str] = []
+    for unit in units:
+        if isinstance(unit, OAUnit):
+            rendered.append(render_init_oa_display(unit).rstrip("\n"))
+        else:
+            text = _content_text(unit.message.get("content"))
+            block = [f"[Framework Feedback {unit.feedback_index}]"]
+            if text:
+                block.append(text)
+            rendered.append("\n".join(block))
+    return "\n\n".join(rendered) + ("\n" if rendered else "")

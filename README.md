@@ -11,8 +11,11 @@ OpenHands, provider credentials, agent runners, or experiment outputs.
   units with strict `tool_call_id` validation.
 - Compact, human-readable OA text that preserves source indentation, command
   output, tracebacks, Unicode, and message order.
-- Init-baseline history text using native OpenHands causal order
+- Init-baseline history text using native agent causal order
   (`[Action N]` followed by its resulting `[Observation N]`).
+- A mini-SWE-agent v2 dialect that preserves its fixed system/task prefix,
+  strict Bash tool-call pairing, and standalone format feedback without
+  fabricating an Action.
 - White-background, black-text PNG rendering with font coverage checks,
   deterministic pagination, and no cropping or ellipsis.
 - `fixed_2x`: scale each source OA page to 0.5× in both dimensions and compose
