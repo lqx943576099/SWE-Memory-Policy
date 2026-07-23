@@ -4,6 +4,8 @@ from swe_memory_policy.history import (
     ParsedHistory,
     parse_chat_history,
     render_flat_history,
+    render_init_history,
+    render_init_oa_display,
     render_oa_display,
 )
 from swe_memory_policy.rendering import (
@@ -31,6 +33,8 @@ __all__ = [
     "compose_fixed_2x",
     "parse_chat_history",
     "render_flat_history",
+    "render_init_history",
+    "render_init_oa_display",
     "render_oa_display",
     "render_text_pages",
     "rendering_manifest",

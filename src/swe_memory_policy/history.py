@@ -183,3 +183,47 @@ def render_oa_display(unit: OAUnit) -> str:
 
 def render_flat_history(units: tuple[OAUnit, ...]) -> str:
     return "".join(render_oa_display(unit) for unit in units)
+
+
+def render_init_oa_display(unit: OAUnit) -> str:
+    """Render one native OpenHands action/result step for init baselines.
+
+    This deliberately omits transport identifiers and audit metadata. The
+    canonical :class:`OAUnit` remains the lossless audit representation; this
+    function defines only the bytes visible to the model in ``text_init`` and
+    ``image_init``.
+    """
+
+    index = unit.oa_index
+    lines = [f"[Action {index}]"]
+    assistant_text = _content_text(unit.assistant.get("content"))
+    if assistant_text:
+        lines.append(assistant_text)
+    for number, call in enumerate(_tool_calls(unit.assistant), start=1):
+        function = call.get("function") or {}
+        name = function.get("name") or call.get("name") or "unknown"
+        arguments = function.get("arguments", call.get("arguments", {}))
+        argument_text = (
+            arguments if isinstance(arguments, str) else compact_json(arguments)
+        )
+        lines.extend([f"[Tool {number}]", str(name)])
+        if argument_text:
+            lines.append(argument_text)
+
+    lines.append(f"[Observation {index}]")
+    for number, observation in enumerate(unit.observations, start=1):
+        if len(unit.observations) > 1:
+            kind = "Tool Result" if observation["role"] == "tool" else "Framework"
+            lines.append(f"[{kind} {number}]")
+        text = _content_text(observation.get("content"))
+        if text:
+            lines.append(text)
+    return "\n".join(lines) + "\n"
+
+
+def render_init_history(units: tuple[OAUnit, ...]) -> str:
+    """Render the complete request history from scratch in chronological order."""
+
+    return "\n".join(render_init_oa_display(unit).rstrip("\n") for unit in units) + (
+        "\n" if units else ""
+    )

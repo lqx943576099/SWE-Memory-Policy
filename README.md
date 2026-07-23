@@ -11,6 +11,8 @@ OpenHands, provider credentials, agent runners, or experiment outputs.
   units with strict `tool_call_id` validation.
 - Compact, human-readable OA text that preserves source indentation, command
   output, tracebacks, Unicode, and message order.
+- Init-baseline history text using native OpenHands causal order
+  (`[Action N]` followed by its resulting `[Observation N]`).
 - White-background, black-text PNG rendering with font coverage checks,
   deterministic pagination, and no cropping or ellipsis.
 - `fixed_2x`: scale each source OA page to 0.5× in both dimensions and compose
@@ -40,12 +42,14 @@ from swe_memory_policy import (
     compose_fixed_2x,
     parse_chat_history,
     render_flat_history,
+    render_init_history,
     render_oa_display,
     render_text_pages,
 )
 
 parsed = parse_chat_history(messages)
 flat_history = render_flat_history(parsed.oa_units)
+init_history = render_init_history(parsed.oa_units)
 
 sources = []
 for oa in parsed.oa_units:

@@ -6,6 +6,7 @@ from swe_memory_policy.history import (
     HistoryProtocolError,
     parse_chat_history,
     render_flat_history,
+    render_init_history,
 )
 
 
@@ -66,6 +67,48 @@ def test_framework_feedback_is_part_of_oa() -> None:
     parsed = parse_chat_history(messages)
     assert parsed.oa_units[0].observations[0]["role"] == "user"
     assert "FRAMEWORK 01" in render_flat_history(parsed.oa_units)
+
+
+def test_init_display_is_readable_and_omits_transport_ids() -> None:
+    parsed = parse_chat_history(_messages())
+    display = render_init_history(parsed.oa_units)
+    assert display.startswith("[Action 1]\ninspect\n[Tool 1]\nterminal\n")
+    assert "[Tool 2]\nterminal\n{}" in display
+    assert "[Observation 1]" in display
+    assert "[Tool Result 1]" in display
+    assert "def f():\n    return" in display
+    assert "call-1" not in display
+    assert "call_id" not in display
+
+
+def test_init_display_preserves_unicode_and_multiline_observation() -> None:
+    messages = [
+        {"role": "system", "content": "system"},
+        {"role": "user", "content": "task"},
+        {
+            "role": "assistant",
+            "content": "检查代码 ✓",
+            "tool_calls": [
+                {
+                    "id": "call-1",
+                    "type": "function",
+                    "function": {
+                        "name": "terminal",
+                        "arguments": '{"command":"python -m pytest"}',
+                    },
+                }
+            ],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call-1",
+            "name": "terminal",
+            "content": "Traceback:\n  文件.py:1\n    return '中文'\n",
+        },
+    ]
+    display = render_init_history(parse_chat_history(messages).oa_units)
+    assert "检查代码 ✓" in display
+    assert "Traceback:\n  文件.py:1\n    return '中文'\n" in display
 
 
 @pytest.mark.parametrize(
