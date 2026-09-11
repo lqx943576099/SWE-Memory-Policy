@@ -13,6 +13,9 @@ dependencies = [
   "pillow==11.3.0",
 ]
 
+[project.scripts]
+swe-memory-render = "swe_memory_policy.offline:main"
+
 [project.optional-dependencies]
 test = [
   "pytest==8.4.1",

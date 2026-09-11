@@ -1,0 +1,113 @@
+{
+  "source": "luna-recent3-cacheaware-stratified20/SWE-Memory-Policy",
+  "synced_at": "2026-09-11",
+  "upstream_base": "1edd2a9fe0ab774a701cd9cf73e280b28c61f91c",
+  "core_files": [
+    {
+      "path": "src/swe_memory_policy/history.py",
+      "sha256": "df01c4a8cbaa07608c2f222c7ecc7109a78549c3064b5c46b9299f8bed980b96"
+    },
+    {
+      "path": "src/swe_memory_policy/image_init/__init__.py",
+      "sha256": "4b13bb79340edd88f423daa5d032e57a9f583a2e361961dc087991091501b3da"
+    },
+    {
+      "path": "src/swe_memory_policy/image_init/policy.py",
+      "sha256": "a2c2952ecdc18aa0bfecbfc0fd5d7ef4b901af79784b3dbe3faa7c47dcca5924"
+    },
+    {
+      "path": "src/swe_memory_policy/image_init/prompt.py",
+      "sha256": "267a823d8479ee7440c841437631f5a1cf8ff6ee3f73c6848129815f61fc3f2a"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation/__init__.py",
+      "sha256": "07ece87576d78b7313eaf589af6557ea50dab72050b1c2737afed862ab795879"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation/policy.py",
+      "sha256": "a515f92d40533209e0ca831cd08d9b94417d1ab669894bf4ddd0ea460591ff4d"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation_1x_noframe/__init__.py",
+      "sha256": "8dfa746bcca92aaf1042b1ad756f68ff42f947066bc2030dec008bd93337d6a0"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation_1x_noframe/policy.py",
+      "sha256": "05969ca9f15c0c55430d8c062eac253a4a721377b7fd0b92cfb840fccdd0cf85"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation_2x/__init__.py",
+      "sha256": "fcc5d83d2be7e0c0143ded3595c36e6f7d89ad4ec0d1cfa7084de7361a8841a5"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation_2x/policy.py",
+      "sha256": "5fcc3a6fe638ced2471822867244a16f1dfa54ff671f95a4d9d402ead3179c32"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation_4x/__init__.py",
+      "sha256": "ac7fb84fca64fa093b77a9b9d4e87c330713a9d161205cd2c4d1bbc04e401b86"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_only_observation_4x/policy.py",
+      "sha256": "04fe1166afdd3e1fa89cf487a0896699a4c9e1fc645c507d60384d12f829cbd6"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/__init__.py",
+      "sha256": "df10ae9484d628c7212db2fe452d5f6185a64deb22eac560a0c08e7c77caf8d3"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/policy.py",
+      "sha256": "a090f610e028a67530bde690f8de2de2daa9c908334f36890f9860e0bba168f4"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/__init__.py",
+      "sha256": "62da47a80c420d284be0f874d1ef0b53ceb1ca1162c9e783e9d6c604a552cd01"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/__main__.py",
+      "sha256": "4d6fac621ccd54931058579b796e782461850f7ac333f1da8fee03ab6a4fbcf9"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/cli.py",
+      "sha256": "bcd9096bdb5519d7eb17ac6cd355a60e7566febebf31569d679566f285915b5e"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/model.py",
+      "sha256": "5b3180144fe96ddd29812be973a487a2222dcdaa90be8fbbc4e55bd3dc3c595d"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/parsing.py",
+      "sha256": "b6790802cb679efbcd52eb41a32423f833bb41f6fc18c8b71d054158a3730673"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/path_records.py",
+      "sha256": "5c94654ec60cebc2af0e0477f0fd6f8a7a827440884f783a82fc23fcabee6a09"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/python_compact.py",
+      "sha256": "c445ceba526dd45c42386871aa0d3ab986865256aa28ebca9e7696d8482fff93"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/renderer.py",
+      "sha256": "46637c5e24fc798f83ba6141356c3bc201dcbedaba34f6904fce1e2d75f9d5bd"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/structured_text.py",
+      "sha256": "f47d2d4cdf0e4a052b5c772336165f17af00eb9e3ac63d97afa24cef12b5346d"
+    },
+    {
+      "path": "src/swe_memory_policy/image_response_rencent3text/tools/terminal_sanitize.py",
+      "sha256": "41eebeaebe40a92ac8e821872bf3ad8e2282496238aeaea80aad58a959192ff2"
+    },
+    {
+      "path": "src/swe_memory_policy/rendering.py",
+      "sha256": "3f01e1adb54cc609bb04b2b895c59662ad04e977580e79cd54192ffcfe15ac83"
+    },
+    {
+      "path": "src/swe_memory_policy/utils.py",
+      "sha256": "9113870b7df775abbdbd3f6700aedfb09feead1f6c095959fcfac09b20011c55"
+    }
+  ],
+  "additional_adapter": "src/swe_memory_policy/offline.py",
+  "compatibility": "Package __init__ adds upstream legacy exports; legacy.py preserves old display helpers; strategies.py retained unchanged."
+}

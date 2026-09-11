@@ -1,0 +1,9 @@
+{
+  "observation_index": 1,
+  "tool_message_index": 1,
+  "tool_call_id": "call_synthetic_example",
+  "tool_name": "bash",
+  "tool_arguments": "{\"command\":\"cat /testbed/example.py\"}",
+  "project_root": "/testbed",
+  "content": "<returncode>0</returncode>\n<output>\ndef add(a, b):\n    return a + b\n</output>"
+}

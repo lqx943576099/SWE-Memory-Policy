@@ -6,7 +6,6 @@ from swe_memory_policy.history import (
     HistoryProtocolError,
     parse_chat_history,
     parse_mini_swe_agent_history,
-    render_flat_history,
     render_init_history,
     render_init_history_units,
 )
@@ -55,10 +54,9 @@ def test_parse_multi_tool_oa_and_render_exact_content() -> None:
     assert len(parsed.static_messages) == 2
     assert len(parsed.oa_units) == 1
     assert len(parsed.oa_units[0].observations) == 2
-    display = render_flat_history(parsed.oa_units)
-    assert "OA 0001 | ACTION" in display
+    display = render_init_history(parsed.oa_units)
+    assert "[Action 1]" in display
     assert "def f():\n    return '中文 ✓'" in display
-    assert "call_id=call-2" in display
 
 
 def test_framework_feedback_is_part_of_oa() -> None:
@@ -68,7 +66,9 @@ def test_framework_feedback_is_part_of_oa() -> None:
     ]
     parsed = parse_chat_history(messages)
     assert parsed.oa_units[0].observations[0]["role"] == "user"
-    assert "FRAMEWORK 01" in render_flat_history(parsed.oa_units)
+    assert parsed.oa_units[0].observations[0]["content"] == (
+        "Function call validation failed"
+    )
 
 
 def test_mini_standalone_format_feedback_is_not_faked_as_oa() -> None:

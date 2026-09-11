@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+from fractions import Fraction
 from pathlib import Path
 
 from PIL import Image
 
-from swe_memory_policy.rendering import render_text_pages
-from swe_memory_policy.strategies import (
-    CANVAS_HEIGHT,
-    CANVAS_WIDTH,
-    compose_dynamic_recursive,
-    compose_fixed_2x,
+from swe_memory_policy.rendering import (
+    BASE_WIDTH,
+    FontResolver,
+    downscale_png,
+    load_font_faces,
+    render_text_pages,
+    rendering_manifest,
 )
 from swe_memory_policy.utils import sha256_file
 
@@ -21,42 +23,92 @@ def test_white_render_is_deterministic_and_preserves_unicode(tmp_path: Path) -> 
     assert len(first) == len(second) == 1
     assert sha256_file(first[0]) == sha256_file(second[0])
     with Image.open(first[0]) as image:
-        assert image.width == CANVAS_WIDTH
+        assert image.width == BASE_WIDTH
         assert image.getpixel((0, 0)) == (255, 255, 255)
 
 
-def test_fixed_2x_is_ordered_and_uses_half_scale(tmp_path: Path) -> None:
-    sources = []
-    for index in range(1, 4):
-        path = render_text_pages(
-            f"OA {index:04d} | ACTION\nvalue={index}\n",
-            tmp_path / "source",
-            f"OA{index:04d}",
-        )[0]
-        sources.append((index, path))
-    canvases, record = compose_fixed_2x(sources, tmp_path / "canvas", 2)
-    assert len(canvases) == 1
-    assert [item["oa_index"] for item in record["placements"]] == [1, 2, 3]
-    assert all(item["linear_scale"] == 0.5 for item in record["placements"])
-    with Image.open(canvases[0]) as image:
-        assert image.size == (CANVAS_WIDTH, CANVAS_HEIGHT)
+def test_render_strips_ansi_terminal_formatting(tmp_path: Path) -> None:
+    pages = render_text_pages(
+        "plain \x1b[31mred\x1b[0m text and stray \x1b escape\n",
+        tmp_path / "ansi",
+        "OA0001",
+    )
+    assert len(pages) == 1
+    with Image.open(pages[0]) as image:
+        assert image.width == BASE_WIDTH
 
 
-def test_dynamic_canvas_records_parent_hash(tmp_path: Path) -> None:
-    first_source = render_text_pages(
-        "OA 0001 | ACTION\na\n", tmp_path / "s", "OA0001"
+def test_legacy_render_uses_full_terminal_sanitizer_policy(tmp_path: Path) -> None:
+    pages = render_text_pages(
+        "\x1b]8;;https://example.invalid\x1b\\label\x1b]8;;\x1b\\ "
+        "\x1bPpayload\x1b\\ done\n",
+        tmp_path / "terminal-families",
+        "OA0001",
     )
-    first, first_record = compose_dynamic_recursive(
-        None, first_source, tmp_path / "c", 1
+    assert len(pages) == 1
+    manifest = rendering_manifest()
+    assert manifest["terminal_sanitizer_policy"] == "terminal-sanitize-v1"
+    assert manifest["terminal_sanitizer_visual_copy_only"] is True
+
+
+def test_unavailable_unicode_uses_reversible_codepoint_label(tmp_path: Path) -> None:
+    resolver = FontResolver()
+    unavailable = "\u0a00"
+    assert resolver.renderable_text(f"before {unavailable} after") == (
+        "before [[U+0A00]] after"
     )
-    second_source = render_text_pages(
-        "OA 0002 | ACTION\nb\n", tmp_path / "s", "OA0002"
+    pages = render_text_pages(
+        f"before {unavailable} after\n", tmp_path / "unicode-fallback", "OA0001"
     )
-    second, record = compose_dynamic_recursive(
-        first, second_source, tmp_path / "c", 2
+    assert len(pages) == 1
+    assert resolver.codepoint_label(unavailable) == "[[U+0A00]]"
+
+
+def test_font_faces_are_cached_per_process() -> None:
+    assert load_font_faces() is load_font_faces()
+
+
+def test_labeled_pages_are_deterministic_and_always_numbered(
+    tmp_path: Path,
+) -> None:
+    first = render_text_pages(
+        "role: assistant\ncontent:\nhello\n",
+        tmp_path / "first",
+        "request_0001_OA0001",
+        page_label="OA 1",
+        always_page_suffix=True,
     )
-    assert first_record["parent_sha256"] is None
-    assert record["parent_sha256"] == sha256_file(first)
-    assert record["parent_linear_scale"] == 0.5
-    with Image.open(second) as image:
-        assert image.size == (CANVAS_WIDTH, CANVAS_HEIGHT)
+    second = render_text_pages(
+        "role: assistant\ncontent:\nhello\n",
+        tmp_path / "second",
+        "request_0001_OA0001",
+        page_label="OA 1",
+        always_page_suffix=True,
+    )
+    assert first[0].name == "request_0001_OA0001_p001.png"
+    assert sha256_file(first[0]) == sha256_file(second[0])
+
+
+def test_png_downscale_changes_only_linear_resolution(tmp_path: Path) -> None:
+    page_2x = render_text_pages("observation\n", tmp_path / "2x", "page")[0]
+    page_4x = render_text_pages("observation\n", tmp_path / "4x", "page")[0]
+    geometry_2x = downscale_png(page_2x, linear_factor=2)
+    geometry_4x = downscale_png(page_4x, linear_factor=4)
+    assert geometry_2x["original_width"] == BASE_WIDTH
+    assert geometry_2x["width"] == BASE_WIDTH // 2
+    assert geometry_4x["width"] == BASE_WIDTH // 4
+    with Image.open(page_2x) as image:
+        assert image.size == (geometry_2x["width"], geometry_2x["height"])
+    with Image.open(page_4x) as image:
+        assert image.size == (geometry_4x["width"], geometry_4x["height"])
+
+
+def test_png_downscale_supports_deterministic_rational_divisors(
+    tmp_path: Path,
+) -> None:
+    page = render_text_pages("observation\n", tmp_path / "rational", "page")[0]
+    geometry = downscale_png(page, linear_factor=Fraction(13, 10))
+    assert geometry["linear_downscale_factor"] == "13/10"
+    assert geometry["linear_divisor_numerator"] == 13
+    assert geometry["linear_divisor_denominator"] == 10
+    assert geometry["width"] == BASE_WIDTH * 10 // 13
