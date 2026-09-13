@@ -11,3 +11,4 @@ sessions/
 artifacts/
 *.png
 !.github/**/*.png
+!docs/images/gallery/*.png

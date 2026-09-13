@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from fractions import Fraction
 from pathlib import Path
 
 from PIL import Image
@@ -8,7 +7,6 @@ from PIL import Image
 from swe_memory_policy.rendering import (
     BASE_WIDTH,
     FontResolver,
-    downscale_png,
     load_font_faces,
     render_text_pages,
     rendering_manifest,
@@ -38,7 +36,7 @@ def test_render_strips_ansi_terminal_formatting(tmp_path: Path) -> None:
         assert image.width == BASE_WIDTH
 
 
-def test_legacy_render_uses_full_terminal_sanitizer_policy(tmp_path: Path) -> None:
+def test_fallback_render_uses_full_terminal_sanitizer_policy(tmp_path: Path) -> None:
     pages = render_text_pages(
         "\x1b]8;;https://example.invalid\x1b\\label\x1b]8;;\x1b\\ "
         "\x1bPpayload\x1b\\ done\n",
@@ -87,28 +85,3 @@ def test_labeled_pages_are_deterministic_and_always_numbered(
     )
     assert first[0].name == "request_0001_OA0001_p001.png"
     assert sha256_file(first[0]) == sha256_file(second[0])
-
-
-def test_png_downscale_changes_only_linear_resolution(tmp_path: Path) -> None:
-    page_2x = render_text_pages("observation\n", tmp_path / "2x", "page")[0]
-    page_4x = render_text_pages("observation\n", tmp_path / "4x", "page")[0]
-    geometry_2x = downscale_png(page_2x, linear_factor=2)
-    geometry_4x = downscale_png(page_4x, linear_factor=4)
-    assert geometry_2x["original_width"] == BASE_WIDTH
-    assert geometry_2x["width"] == BASE_WIDTH // 2
-    assert geometry_4x["width"] == BASE_WIDTH // 4
-    with Image.open(page_2x) as image:
-        assert image.size == (geometry_2x["width"], geometry_2x["height"])
-    with Image.open(page_4x) as image:
-        assert image.size == (geometry_4x["width"], geometry_4x["height"])
-
-
-def test_png_downscale_supports_deterministic_rational_divisors(
-    tmp_path: Path,
-) -> None:
-    page = render_text_pages("observation\n", tmp_path / "rational", "page")[0]
-    geometry = downscale_png(page, linear_factor=Fraction(13, 10))
-    assert geometry["linear_downscale_factor"] == "13/10"
-    assert geometry["linear_divisor_numerator"] == 13
-    assert geometry["linear_divisor_denominator"] == 10
-    assert geometry["width"] == BASE_WIDTH * 10 // 13

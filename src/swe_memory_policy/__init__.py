@@ -25,24 +25,11 @@ from swe_memory_policy.image_response_only_observation import (
     build_responses_observation_image_block,
     render_responses_image_response_only_observation,
 )
-from swe_memory_policy.image_response_only_observation_1x_noframe import (
-    NoframeObservationImageBlock,
-    build_noframe_observation_image_block,
-)
-from swe_memory_policy.image_response_only_observation_2x import (
-    build_responses_observation_image_block_2x,
-    render_responses_image_response_only_observation_2x,
-)
-from swe_memory_policy.image_response_only_observation_4x import (
-    build_responses_observation_image_block_4x,
-    render_responses_image_response_only_observation_4x,
-)
 from swe_memory_policy.image_response_rencent3text import (
     DEFAULT_RECENT_OA_COUNT,
     TEXT_ONLY_THROUGH_OA_COUNT,
     CompactObservationInput,
     CompactRenderResult,
-    HeaderOverflowError,
     ResponsesObservationPartition,
     ResponsesObservationRef,
     compact_renderer_manifest,
@@ -50,45 +37,33 @@ from swe_memory_policy.image_response_rencent3text import (
     partition_responses_observations,
     render_compact_observation,
 )
-from swe_memory_policy.legacy import render_flat_history, render_oa_display
 from swe_memory_policy.rendering import (
     FontCoverageError,
-    downscale_png,
     downscale_png_to_visual_token_ratio,
-    estimate_high_detail_visual_tokens,
-    render_noframe_observation_pages,
     render_text_pages,
     rendering_manifest,
 )
-from swe_memory_policy.strategies import (
-    CANVAS_HEIGHT,
-    CANVAS_WIDTH,
-    compose_dynamic_recursive,
-    compose_dynamic_reference,
-    compose_fixed_2x,
+from swe_memory_policy.vision_tokens import (
+    UnattainableVisualTokenBudget,
+    estimate_visual_tokens,
+    plan_visual_token_resize,
 )
 
 __all__ = [
-    "CANVAS_HEIGHT",
-    "CANVAS_WIDTH",
-    "compose_dynamic_recursive",
-    "compose_dynamic_reference",
-    "compose_fixed_2x",
-    "render_flat_history",
-    "render_oa_display",
+    "UnattainableVisualTokenBudget",
+    "estimate_visual_tokens",
+    "plan_visual_token_resize",
     "DEFAULT_RECENT_OA_COUNT",
     "CompactObservationInput",
     "CompactRenderResult",
     "FontCoverageError",
     "FrameworkFeedbackUnit",
     "HistoryProtocolError",
-    "HeaderOverflowError",
     "IMAGE_INIT_HISTORY_PROMPT",
     "ImageInitBlock",
     "HistoryUnit",
     "OAUnit",
     "ObservationImageBlock",
-    "NoframeObservationImageBlock",
     "ParsedHistory",
     "ResponsesObservationPartition",
     "ResponsesObservationRef",
@@ -96,12 +71,7 @@ __all__ = [
     "build_image_init_blocks",
     "build_image_init_history_prompt",
     "build_responses_observation_image_block",
-    "build_responses_observation_image_block_2x",
-    "build_responses_observation_image_block_4x",
-    "build_noframe_observation_image_block",
-    "downscale_png",
     "downscale_png_to_visual_token_ratio",
-    "estimate_high_detail_visual_tokens",
     "parse_chat_history",
     "parse_mini_swe_agent_history",
     "enumerate_responses_observations",
@@ -112,13 +82,10 @@ __all__ = [
     "render_image_init_oa",
     "render_image_init_unit",
     "render_responses_image_response_only_observation",
-    "render_responses_image_response_only_observation_2x",
-    "render_responses_image_response_only_observation_4x",
     "render_init_history",
     "render_init_history_units",
     "render_init_oa_display",
     "render_text_pages",
-    "render_noframe_observation_pages",
     "render_compact_observation",
     "rendering_manifest",
 ]

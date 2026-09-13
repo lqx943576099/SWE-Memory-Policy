@@ -9,7 +9,6 @@ from swe_memory_policy.image_response_rencent3text.policy import (
 from swe_memory_policy.image_response_rencent3text.tools import (
     CompactObservationInput,
     CompactRenderResult,
-    HeaderOverflowError,
     compact_renderer_manifest,
     render_compact_observation,
 )
@@ -21,7 +20,6 @@ __all__ = [
     "ResponsesObservationRef",
     "CompactObservationInput",
     "CompactRenderResult",
-    "HeaderOverflowError",
     "compact_renderer_manifest",
     "enumerate_responses_observations",
     "partition_responses_observations",

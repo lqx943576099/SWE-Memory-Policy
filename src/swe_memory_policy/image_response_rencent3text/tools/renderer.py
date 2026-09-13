@@ -81,10 +81,6 @@ _RETURNCODE = re.compile(r"<returncode>(?P<value>[^<]*)</returncode>")
 _EXCEPTION = re.compile(r"<exception>(?P<value>.*?)</exception>", re.DOTALL)
 
 
-class HeaderOverflowError(ValueError):
-    pass
-
-
 @dataclass(frozen=True)
 class VisualLine:
     atoms: tuple[tuple[str, str, FontFace], ...]

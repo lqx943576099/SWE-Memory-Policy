@@ -1,4 +1,4 @@
-"""Offline adapter for the local recent3 compact renderer and scale helpers."""
+"""Render recent3 observation history with strict visual Token budgets, offline."""
 
 from __future__ import annotations
 
@@ -12,18 +12,22 @@ from typing import Any
 
 from swe_memory_policy import (
     CompactObservationInput,
-    HeaderOverflowError,
     build_responses_observation_image_block,
     compact_renderer_manifest,
-    downscale_png,
     downscale_png_to_visual_token_ratio,
     enumerate_responses_observations,
     partition_responses_observations,
     render_compact_observation,
     render_text_pages,
 )
-from swe_memory_policy.rendering import estimate_high_detail_visual_tokens
 from swe_memory_policy.utils import sha256_file
+from swe_memory_policy.vision_tokens import (
+    DETAIL,
+    ESTIMATOR,
+    MODEL,
+    UnattainableVisualTokenBudget,
+    estimate_visual_tokens,
+)
 
 VISUAL_WHITESPACE_POLICY = "compact_visual_whitespace_v2"
 
@@ -125,10 +129,7 @@ def render_base(
     observation = replace(
         observation, visual_whitespace_policy=VISUAL_WHITESPACE_POLICY
     )
-    try:
-        compact = render_compact_observation(observation, output_dir)
-    except HeaderOverflowError:
-        compact = None
+    compact = render_compact_observation(observation, output_dir)
     if compact is not None:
         pages = [Path(compact.png_path)]
         metadata = {
@@ -154,8 +155,6 @@ def render_base(
             "classification": "preserve_source_lines_fallback",
             "compact_rendering": None,
         }
-    for page in pages:
-        downscale_png(page, linear_factor=1)
     return pages, metadata
 
 
@@ -164,12 +163,18 @@ def render_history(
     output_dir: Path,
     *,
     factors: tuple[Fraction, ...] = (Fraction(1), Fraction(2)),
-    scale_mode: str = "token",
+    model: str = MODEL,
+    detail: str = DETAIL,
     recent: int = 3,
     project_root: str = "/testbed",
 ) -> dict[str, Any]:
-    if scale_mode not in {"token", "linear"}:
-        raise ValueError("scale_mode must be token or linear")
+    estimate_visual_tokens(1, 1, model=model, detail=detail)
+    if any(
+        isinstance(factor, bool) or not isinstance(factor, int | Fraction)
+        for factor in factors
+    ):
+        raise TypeError("factors must be integers or Fractions")
+    factors = tuple(Fraction(factor) for factor in factors)
     if not factors or any(factor < 1 for factor in factors):
         raise ValueError("provide one or more factors >= 1")
     if len(set(factors)) != len(factors):
@@ -179,9 +184,11 @@ def render_history(
     )
     output_dir.mkdir(parents=True, exist_ok=False)
     result = {
-        "schema_version": "swe-memory-offline-render-v1",
-        "scale_mode": scale_mode,
-        "visual_token_estimator": "openai_high_detail_tiles_v1",
+        "schema_version": "swe-memory-offline-render-v2",
+        "compression_definition": "visual_token_ratio",
+        "visual_token_estimator": ESTIMATOR,
+        "model": model,
+        "input_image_detail": detail,
         "renderer": compact_renderer_manifest(),
         **selection,
         "observations": [],
@@ -198,36 +205,51 @@ def render_history(
         }
         for factor in factors:
             label = f"{factor.numerator}p{factor.denominator}"
-            target_dir = output_dir / f"{scale_mode}_{label}"
+            target_dir = output_dir / f"token_{label}"
             target_dir.mkdir(exist_ok=True)
             for page in pages:
                 target = target_dir / page.name
                 shutil.copy2(page, target)
-                if scale_mode == "token":
+                image_record = {
+                    "factor": str(factor),
+                    "base_path": page.relative_to(output_dir).as_posix(),
+                    "base_sha256": sha256_file(page),
+                }
+                try:
                     geometry = downscale_png_to_visual_token_ratio(
                         target,
                         target_numerator=factor.denominator,
                         target_denominator=factor.numerator,
+                        model=model,
+                        detail=detail,
+                    )
+                except UnattainableVisualTokenBudget as error:
+                    target.unlink()
+                    image_record.update(
+                        status="unattainable_budget",
+                        path=None,
+                        sha256=None,
+                        error=str(error),
+                        **error.metadata,
                     )
                 else:
-                    geometry = downscale_png(target, linear_factor=factor)
-                    geometry["compression_definition"] = "linear_dimensions"
-                    geometry["estimated_visual_tokens"] = (
-                        estimate_high_detail_visual_tokens(
-                            int(geometry["width"]), int(geometry["height"])
-                        )
-                    )
-                record["images"].append(
-                    {
-                        "factor": str(factor),
-                        "path": target.relative_to(output_dir).as_posix(),
-                        "sha256": sha256_file(target),
-                        "base_path": page.relative_to(output_dir).as_posix(),
-                        "base_sha256": sha256_file(page),
+                    image_record.update(
+                        status="rendered",
+                        path=target.relative_to(output_dir).as_posix(),
+                        sha256=sha256_file(target),
                         **geometry,
-                    }
-                )
+                    )
+                record["images"].append(image_record)
         result["observations"].append(record)
+    result["status"] = (
+        "partial"
+        if any(
+            image["status"] != "rendered"
+            for observation in result["observations"]
+            for image in observation["images"]
+        )
+        else "complete"
+    )
     (output_dir / "manifest.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
@@ -240,22 +262,30 @@ def main() -> None:
         "input", type=Path, help="UTF-8 .txt observation or JSON history"
     )
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--factors", nargs="+", default=["1", "2"], type=Fraction)
-    parser.add_argument("--scale-mode", choices=["token", "linear"], default="token")
+    parser.add_argument(
+        "--factors", nargs="+", default=[Fraction(1), Fraction(2)], type=Fraction
+    )
+    parser.add_argument("--model", default=MODEL, choices=[MODEL])
+    parser.add_argument("--detail", default=DETAIL, choices=[DETAIL])
     parser.add_argument("--recent", type=int, default=3)
     parser.add_argument("--project-root", default="/testbed")
     args = parser.parse_args()
     text = args.input.read_text(encoding="utf-8")
     value = text if args.input.suffix.lower() == ".txt" else json.loads(text)
-    render_history(
+    result = render_history(
         value,
         args.output_dir,
         factors=tuple(args.factors),
-        scale_mode=args.scale_mode,
+        model=args.model,
+        detail=args.detail,
         recent=args.recent,
         project_root=args.project_root,
     )
     print(args.output_dir / "manifest.json")
+    if result["status"] == "partial":
+        parser.exit(
+            2, "some requested Token budgets are unattainable; see manifest.json\n"
+        )
 
 
 if __name__ == "__main__":

@@ -400,16 +400,19 @@ def compact_python_text(source: str, *, complete: bool) -> PythonCompaction:
     opens_after: dict[tuple[int, int], int] = {}
     closes_before: dict[int, int] = {}
     inline_closes: dict[int, int] = {}
+    generated_indent_stack: list[bool] = []
     statement: list[tokenize.TokenInfo] = []
     last_statement: list[tokenize.TokenInfo] = []
-    last_colon: tokenize.TokenInfo | None = None
     for item in tokens:
         if item.type == token.INDENT:
             colon = _header_colon(last_statement)
+            generated_indent_stack.append(colon is not None)
             if colon is not None:
                 opens_after[colon.end] = opens_after.get(colon.end, 0) + 1
             continue
         if item.type == token.DEDENT:
+            if not generated_indent_stack.pop():
+                continue
             row = item.start[0]
             # generate_tokens emits implicit DEDENTs on the synthetic EOF row.
             if complete or bool(item.line):
@@ -430,7 +433,6 @@ def compact_python_text(source: str, *, complete: bool) -> PythonCompaction:
                         inline_closes.get(item.start[0], 0) + 1
                     )
             last_statement = statement
-            last_colon = colon
             statement = []
             continue
         if item.type not in {
@@ -440,8 +442,6 @@ def compact_python_text(source: str, *, complete: bool) -> PythonCompaction:
             token.DEDENT,
         }:
             statement.append(item)
-    del last_colon
-
     atoms: list[StyledAtom] = []
     open_count = 0
     close_count = 0

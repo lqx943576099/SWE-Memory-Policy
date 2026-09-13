@@ -602,6 +602,34 @@ def test_nested_class_before_first_method_keeps_generated_braces_balanced() -> N
     assert any(atom.generated_kind == "close_brace" for atom in outer.atoms)
 
 
+def test_outer_indent_with_column_zero_multiline_string_keeps_braces_balanced(
+    tmp_path: Path,
+) -> None:
+    sources = [
+        'class Example:\n    def method(self):\n        value = """first\n'
+        'column_zero\nlast"""\n        return value\n',
+        'class Example:\n    def method(self):\n        if True:\n'
+        '            value = """first\ncolumn_zero\nlast"""\n'
+        '            return value\n        return None\n',
+    ]
+    for index, source in enumerate(sources):
+        regions = build_python_regions(source, complete=True)
+        opens, closes = brace_counts(regions)
+        assert opens > 0
+        assert opens == closes
+        method = next(region for region in regions if region.kind == "method")
+        assert 'value = """first' in method.plain_text
+        assert 'column_zero ⏎ last"""' in method.plain_text
+        assert "return value" in method.plain_text
+
+        result = render_compact_observation(_observation(source), tmp_path / str(index))
+        assert result is not None
+        assert result.manifest["classification"] == "compact_python_v1"
+        with Image.open(result.png_path) as rendered:
+            assert rendered.width >= 1152
+            assert rendered.height > 0
+
+
 def test_renderer_uses_content_width_tier_and_compact_audited_header(
     tmp_path: Path,
 ) -> None:

@@ -1,8 +1,18 @@
 {
-  "source": "luna-recent3-cacheaware-stratified20/SWE-Memory-Policy",
-  "synced_at": "2026-09-11",
-  "upstream_base": "1edd2a9fe0ab774a701cd9cf73e280b28c61f91c",
-  "core_files": [
+  "schema_version": "swe-memory-source-manifest-v2",
+  "updated_at": "2026-09-13",
+  "source_lineage": "compact recent3 synchronization plus Luna strict-token v2 and Python suite-boundary repair",
+  "original_sync_date": "2026-09-11",
+  "original_upstream_base": "1edd2a9fe0ab774a701cd9cf73e280b28c61f91c",
+  "compression_definition": "visual_token_ratio",
+  "visual_token_estimator": "luna_patch32_high_20260906_v2",
+  "model": "gpt-5.6-luna",
+  "detail": "high",
+  "current_public_source_files": [
+    {
+      "path": "src/swe_memory_policy/__init__.py",
+      "sha256": "8ccb161eccac838b4a00de52b67bc53c639789d37ee78b8f75e1dc3f9ffe6e6c"
+    },
     {
       "path": "src/swe_memory_policy/history.py",
       "sha256": "df01c4a8cbaa07608c2f222c7ecc7109a78549c3064b5c46b9299f8bed980b96"
@@ -28,32 +38,8 @@
       "sha256": "a515f92d40533209e0ca831cd08d9b94417d1ab669894bf4ddd0ea460591ff4d"
     },
     {
-      "path": "src/swe_memory_policy/image_response_only_observation_1x_noframe/__init__.py",
-      "sha256": "8dfa746bcca92aaf1042b1ad756f68ff42f947066bc2030dec008bd93337d6a0"
-    },
-    {
-      "path": "src/swe_memory_policy/image_response_only_observation_1x_noframe/policy.py",
-      "sha256": "05969ca9f15c0c55430d8c062eac253a4a721377b7fd0b92cfb840fccdd0cf85"
-    },
-    {
-      "path": "src/swe_memory_policy/image_response_only_observation_2x/__init__.py",
-      "sha256": "fcc5d83d2be7e0c0143ded3595c36e6f7d89ad4ec0d1cfa7084de7361a8841a5"
-    },
-    {
-      "path": "src/swe_memory_policy/image_response_only_observation_2x/policy.py",
-      "sha256": "5fcc3a6fe638ced2471822867244a16f1dfa54ff671f95a4d9d402ead3179c32"
-    },
-    {
-      "path": "src/swe_memory_policy/image_response_only_observation_4x/__init__.py",
-      "sha256": "ac7fb84fca64fa093b77a9b9d4e87c330713a9d161205cd2c4d1bbc04e401b86"
-    },
-    {
-      "path": "src/swe_memory_policy/image_response_only_observation_4x/policy.py",
-      "sha256": "04fe1166afdd3e1fa89cf487a0896699a4c9e1fc645c507d60384d12f829cbd6"
-    },
-    {
       "path": "src/swe_memory_policy/image_response_rencent3text/__init__.py",
-      "sha256": "df10ae9484d628c7212db2fe452d5f6185a64deb22eac560a0c08e7c77caf8d3"
+      "sha256": "2bca6001ce0a05fde950b849f75438be976e7d37ea3be3d0437b2ee2fc0fd38c"
     },
     {
       "path": "src/swe_memory_policy/image_response_rencent3text/policy.py",
@@ -61,7 +47,7 @@
     },
     {
       "path": "src/swe_memory_policy/image_response_rencent3text/tools/__init__.py",
-      "sha256": "62da47a80c420d284be0f874d1ef0b53ceb1ca1162c9e783e9d6c604a552cd01"
+      "sha256": "9b363ada43f7cdb67e06a56efb9f44be3566a28c849d1f06a42e5745e0cc3c4d"
     },
     {
       "path": "src/swe_memory_policy/image_response_rencent3text/tools/__main__.py",
@@ -85,11 +71,11 @@
     },
     {
       "path": "src/swe_memory_policy/image_response_rencent3text/tools/python_compact.py",
-      "sha256": "c445ceba526dd45c42386871aa0d3ab986865256aa28ebca9e7696d8482fff93"
+      "sha256": "5a81678c32fa40dd7c10b6231c4e7bd263a819bf467f411d1f2286d551280b0e"
     },
     {
       "path": "src/swe_memory_policy/image_response_rencent3text/tools/renderer.py",
-      "sha256": "46637c5e24fc798f83ba6141356c3bc201dcbedaba34f6904fce1e2d75f9d5bd"
+      "sha256": "741af0c10e2c24ad98c19dae5fd3e373d449ae14cb440775bcc378c4d25e1d1d"
     },
     {
       "path": "src/swe_memory_policy/image_response_rencent3text/tools/structured_text.py",
@@ -100,14 +86,30 @@
       "sha256": "41eebeaebe40a92ac8e821872bf3ad8e2282496238aeaea80aad58a959192ff2"
     },
     {
+      "path": "src/swe_memory_policy/offline.py",
+      "sha256": "4c61c0e4b60e5bb2a1a82b3734086d1625968632faa713a155b6014b3a6a4952"
+    },
+    {
       "path": "src/swe_memory_policy/rendering.py",
-      "sha256": "3f01e1adb54cc609bb04b2b895c59662ad04e977580e79cd54192ffcfe15ac83"
+      "sha256": "25df4d9efb7edf83e6ee341d1f447ef187e2275a0ef2466ad16c25811c367cff"
     },
     {
       "path": "src/swe_memory_policy/utils.py",
-      "sha256": "9113870b7df775abbdbd3f6700aedfb09feead1f6c095959fcfac09b20011c55"
+      "sha256": "993d57466acd20aa39eca6c61d486543a2a52e9fe43d17e20c0cf8fca3a6f835"
+    },
+    {
+      "path": "src/swe_memory_policy/vision_tokens.py",
+      "sha256": "241f9a2c57f3e92a0791d275788eaef243fb1dd734c25d6458a89b014ac106a4"
     }
   ],
-  "additional_adapter": "src/swe_memory_policy/offline.py",
-  "compatibility": "Package __init__ adds upstream legacy exports; legacy.py preserves old display helpers; strategies.py retained unchanged."
+  "generator": {
+    "path": "scripts/build_render_gallery.py",
+    "sha256": "5a6cdda87f5452e263566de3cb078e467055bdd32d02d8662fa18ac17fcd1f5d"
+  },
+  "gallery_manifest": "docs/images/gallery/manifest.json",
+  "notes": [
+    "Fingerprints describe this public revision, not a byte-identical historical experiment runner.",
+    "Dimension-division APIs and unused legacy composition policies were removed.",
+    "No historical benchmark result was rewritten."
+  ]
 }

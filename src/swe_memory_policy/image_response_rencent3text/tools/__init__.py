@@ -15,7 +15,6 @@ from swe_memory_policy.image_response_rencent3text.tools.path_records import (
     parse_path_record_command,
 )
 from swe_memory_policy.image_response_rencent3text.tools.renderer import (
-    HeaderOverflowError,
     build_compact_document,
     compact_renderer_manifest,
     render_compact_observation,
@@ -29,7 +28,6 @@ from swe_memory_policy.image_response_rencent3text.tools.structured_text import 
 __all__ = [
     "CompactObservationInput",
     "CompactRenderResult",
-    "HeaderOverflowError",
     "PathMapping",
     "StructuredTextKind",
     "build_compact_document",
